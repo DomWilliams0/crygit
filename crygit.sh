@@ -8,15 +8,31 @@ show_help() {
 }
 
 validate_name() {
-	[ -n "$NAME" ]
+	[ -n "${cfg[name]}" ]
 }
 
 config_exists() {
 	[ -f $CONFIG_NAME ]
 }
 
+write_config() {
+	{
+		echo "# crygit config last updated $(date)" >&3
+		for key in ${!cfg[@]}; do
+			echo $key=${cfg[$key]} >&3
+		done
+	} 3>$CONFIG_NAME
+}
+
 cmd_init() {
-	echo initting $NAME
+	if config_exists; then
+		echo $CONFIG_NAME already exists
+		exit 1
+	fi
+
+	# TODO generate key and init cryfs
+
+	write_config
 }
 
 # ---------------------
@@ -26,8 +42,11 @@ if (( $# < 2 )); then
 fi
 
 ARGC=$#
-NAME="$1"
 SCMD="$2"
+typeset -A cfg
+cfg=(
+	[name]="$1"
+)
 
 
 if ! validate_name; then
