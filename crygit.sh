@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
+set -e
 
-CONFIG_NAME=".crygit"
+CONFIG_PATH="$HOME/.config/crygit"
 
 show_help() {
 	echo "Usage: $0 <name> <subcommand>"
@@ -8,20 +9,25 @@ show_help() {
 }
 
 validate_name() {
-	[ -n "${cfg[name]}" ]
+	[ -n $NAME ]
+}
+
+create_config_dir() {
+	/usr/bin/mkdir -p $CONFIG_PATH
 }
 
 config_exists() {
-	[ -f $CONFIG_NAME ]
+	[ -f $PATH ]
 }
 
 write_config() {
+	create_config_dir
 	{
-		echo "# crygit config last updated $(date)" >&3
+		echo "# crygit config last updated $(/usr/bin/date)" >&3
 		for key in ${!cfg[@]}; do
 			echo $key=${cfg[$key]} >&3
 		done
-	} 3>$CONFIG_NAME
+	} 3>$PATH
 }
 
 cmd_init() {
@@ -48,6 +54,8 @@ cfg=(
 	[name]="$1"
 )
 
+NAME=${cfg[name]}
+PATH="$CONFIG_PATH/$NAME"
 
 if ! validate_name; then
 	echo Invalid name
