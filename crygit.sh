@@ -2,6 +2,8 @@
 set -e
 
 CONFIG_PATH="$HOME/.config/crygit"
+KEY_LENGTH=512
+CRYFS_CMD="/usr/bin/env CRYFS_NO_UPDATE_CHECK=false /usr/bin/cryfs"
 
 show_help() {
 	echo "Usage: $0 <name> <subcommand>"
@@ -31,13 +33,35 @@ write_config() {
 }
 
 cmd_init() {
-	if config_exists; then
-		echo $CONFIG_NAME already exists
+	if (( $ARGC != 3 )); then
+		echo "Usage: $0 $SCMD <encrypted fs path> <fs mount point>"
 		exit 1
 	fi
 
-	# TODO generate key and init cryfs
+	src=${ARGV[2]}
+	mnt=${ARGV[3]}
 
+	if config_exists; then
+		echo $NAME already exists
+		exit 1
+	fi
+
+	# set mount points in config
+	cfg[src]=$src
+	cfg[mnt]=$mnt
+
+	# generate key
+	echo -n "Generating key of $KEY_LENGTH bytes ... "
+	key=$(/usr/bin/openssl rand -hex $KEY_LENGTH)
+	echo done
+	cfg[key]=$key
+
+	# generate cryfs config
+	echo "Creating cryfs config in $src ... "
+	printf "y\n%s\n%s\n" $key $key | $CRYFS_CMD $src $mnt
+
+	# save all to config
+	echo "Writing config to $PATH"
 	write_config
 }
 
@@ -47,7 +71,8 @@ if (( $# < 2 )); then
 	show_help
 fi
 
-ARGC=$#
+ARGC=$(($#-1))
+ARGV=("$@")
 SCMD="$2"
 typeset -A cfg
 cfg=(
