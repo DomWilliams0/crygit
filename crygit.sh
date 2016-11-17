@@ -5,11 +5,11 @@ CONFIG_PATH="$HOME/.config/crygit"
 KEY_LENGTH=512
 
 run_cryfs() {
-	/usr/bin/env CRYFS_NO_UPDATE_CHECK=false /usr/bin/cryfs ${cfg[src]} ${cfg[mnt]}
+	env CRYFS_NO_UPDATE_CHECK=false cryfs ${cfg[src]} ${cfg[mnt]}
 }
 
 run_git() {
-	/usr/bin/git --git-dir ${cfg[src]}/.git --work-tree ${cfg[src]} "$@"
+	git --git-dir ${cfg[src]}/.git --work-tree ${cfg[src]} "$@"
 }
 
 show_help() {
@@ -22,36 +22,36 @@ validate_name() {
 }
 
 create_config_dir() {
-	/usr/bin/mkdir -p $CONFIG_PATH
+	mkdir -p $CONFIG_PATH
 }
 
 config_exists() {
-	[ -f $PATH ]
+	[ -f $CFG_PATH ]
 }
 
 load_config() {
 	if ! config_exists; then
-		echo "Config for $NAME not found at $PATH"
+		echo "Config for $NAME not found at $CFG_PATH"
 		exit 1
 	fi
 
 	while read line
 	do
-		if echo $line | /usr/bin/grep -F = &>/dev/null; then
-			varname=$(echo "$line" | /usr/bin/cut -d '=' -f 1)
-			cfg[$varname]=$(echo "$line" | /usr/bin/cut -d '=' -f 2-)
+		if echo $line | grep -F = &>/dev/null; then
+			varname=$(echo "$line" | cut -d '=' -f 1)
+			cfg[$varname]=$(echo "$line" | cut -d '=' -f 2-)
 		fi
-	done < $PATH
+	done < $CFG_PATH
 }
 
 write_config() {
 	create_config_dir
 	{
-		echo "# crygit config last updated $(/usr/bin/date)" >&3
+		echo "# crygit config last updated $(date)" >&3
 		for key in ${!cfg[@]}; do
 			echo $key=${cfg[$key]} >&3
 		done
-	} 3>$PATH
+	} 3>$CFG_PATH
 }
 
 cmd_init() {
@@ -74,7 +74,7 @@ cmd_init() {
 
 	# generate key
 	echo "Generating key of $KEY_LENGTH bytes"
-	key=$(/usr/bin/openssl rand -hex $KEY_LENGTH)
+	key=$(openssl rand -hex $KEY_LENGTH)
 	cfg[key]=$key
 
 	# generate cryfs config
@@ -83,14 +83,14 @@ cmd_init() {
 
 	# create git repo
 	echo "Creating git repo"
-	/usr/bin/git init $src
+	git init $src
 	run_git add -A 1>/dev/null
 	run_git commit -a -m "Create filesystem"
 
 	# save all to config
-	echo "Writing config to $PATH"
+	echo "Writing config to $CFG_PATH"
 	write_config
-	/usr/bin/chmod 600 $PATH
+	chmod 600 $CFG_PATH
 }
 
 prepare_mount_change() {
@@ -104,7 +104,7 @@ prepare_mount_change() {
 
 cmd_unmount() {
 	prepare_mount_change
-	/usr/bin/fusermount -u ${cfg[mnt]}
+	fusermount -u ${cfg[mnt]}
 	echo Unmounted $NAME
 }
 
@@ -160,7 +160,7 @@ cfg=(
 )
 
 NAME=${cfg[name]}
-PATH="$CONFIG_PATH/$NAME"
+CFG_PATH="$CONFIG_PATH/$NAME"
 
 if ! validate_name; then
 	echo Invalid name
