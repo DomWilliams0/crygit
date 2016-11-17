@@ -81,6 +81,7 @@ cmd_init() {
 	# save all to config
 	echo "Writing config to $PATH"
 	write_config
+	/usr/bin/chmod 600 $PATH
 }
 
 prepare_mount_change() {
