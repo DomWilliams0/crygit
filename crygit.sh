@@ -33,13 +33,13 @@ write_config() {
 }
 
 cmd_init() {
-	if (( $ARGC != 3 )); then
+	if (( $ARGC != 2 )); then
 		echo "Usage: $0 $SCMD <encrypted fs path> <fs mount point>"
 		exit 1
 	fi
 
-	src=${ARGV[2]}
-	mnt=${ARGV[3]}
+	src=${ARGV[0]}
+	mnt=${ARGV[1]}
 
 	if config_exists; then
 		echo $NAME already exists
@@ -71,8 +71,8 @@ if (( $# < 2 )); then
 	show_help
 fi
 
-ARGC=$(($#-1))
-ARGV=("$@")
+ARGC=$(($#-2))
+ARGV=("${@:3}")
 SCMD="$2"
 typeset -A cfg
 cfg=(
