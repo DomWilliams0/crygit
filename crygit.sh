@@ -114,6 +114,37 @@ cmd_mount() {
 	echo Mounted $NAME
 }
 
+remote_ensure_cmd() {
+	if [ -z $1 ] || [ $1 != $2 ]; then
+		echo "Invalid command"
+		exit 1
+	fi
+}
+
+cmd_remote() {
+	load_config
+	arg1=${ARGV[0]}
+	arg2=${ARGV[1]}
+	arg3=${ARGV[2]}
+
+	case $ARGC in
+		0)
+			run_git remote -v
+			;;
+		2)
+			remote_ensure_cmd $arg1 "rm"
+			run_git remote rm "$arg2"
+			;;
+		3)
+			remote_ensure_cmd $arg1 "add"
+			run_git remote add "$arg2" "$arg3"
+			;;
+		*)
+			remote_ensure_cmd
+			;;
+	esac
+}
+
 # ---------------------
 
 if (( $# < 2 )); then
@@ -146,7 +177,9 @@ case $SCMD in
 	mount)
 		cmd_mount
 		;;
-
+	remote)
+		cmd_remote
+		;;
 	*)
 		echo Invalid subcommand
 		show_help
