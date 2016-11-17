@@ -12,6 +12,10 @@ run_git() {
 	git --git-dir ${cfg[src]}/.git --work-tree ${cfg[src]} "$@"
 }
 
+has_any_remotes() {
+	[ $(run_git remote | wc -l) != "0" ]
+}
+
 show_help() {
 	echo "Usage: $0 <name> <subcommand>"
 	exit 0
@@ -129,7 +133,11 @@ cmd_remote() {
 
 	case $ARGC in
 		0)
-			run_git remote -v
+			if ! has_any_remotes; then
+				echo No remotes
+			else
+				run_git remote -v
+			fi
 			;;
 		2)
 			remote_ensure_cmd $arg1 "rm"
@@ -145,8 +153,30 @@ cmd_remote() {
 	esac
 }
 
-# ---------------------
+cmd_sync() {
+	if (( $ARGC != 0 )); then
+		echo "Usage: $0 $SCMD"
+		exit 1
+	fi
 
+	load_config
+
+	run_git add -A >/dev/null
+
+	set +e
+	run_git commit -a -m "Update files" >/dev/null
+
+	has_any_remotes || { echo "No remotes to sync to"; exit 1; }
+	for remote in $(run_git remote); do
+		echo Syncing to $remote
+		run_git push --all $remote
+		echo done
+	done
+
+	set -e
+}
+
+# ---------------------
 if (( $# < 2 )); then
 	show_help
 fi
@@ -179,6 +209,9 @@ case $SCMD in
 		;;
 	remote)
 		cmd_remote
+		;;
+	sync)
+		cmd_sync
 		;;
 	*)
 		echo Invalid subcommand
