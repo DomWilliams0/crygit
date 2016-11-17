@@ -8,6 +8,10 @@ run_cryfs() {
 	/usr/bin/env CRYFS_NO_UPDATE_CHECK=false /usr/bin/cryfs ${cfg[src]} ${cfg[mnt]}
 }
 
+run_git() {
+	/usr/bin/git --git-dir ${cfg[src]}/.git --work-tree ${cfg[src]} "$@"
+}
+
 show_help() {
 	echo "Usage: $0 <name> <subcommand>"
 	exit 0
@@ -69,14 +73,19 @@ cmd_init() {
 	cfg[mnt]=$mnt
 
 	# generate key
-	echo -n "Generating key of $KEY_LENGTH bytes ... "
+	echo "Generating key of $KEY_LENGTH bytes"
 	key=$(/usr/bin/openssl rand -hex $KEY_LENGTH)
-	echo done
 	cfg[key]=$key
 
 	# generate cryfs config
-	echo "Creating cryfs config in $src ... "
+	echo "Creating cryfs config in $src"
 	printf "y\n%s\n%s\n" $key $key | run_cryfs
+
+	# create git repo
+	echo "Creating git repo"
+	/usr/bin/git init $src
+	run_git add -A 1>/dev/null
+	run_git commit -a -m "Create filesystem"
 
 	# save all to config
 	echo "Writing config to $PATH"
