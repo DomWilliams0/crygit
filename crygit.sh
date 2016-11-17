@@ -80,16 +80,25 @@ cmd_init() {
 	write_config
 }
 
-cmd_unmount() {
+prepare_mount_change() {
 	if (( $ARGC != 0 )); then
 		echo "Usage: $0 $SCMD"
 		exit 1
 	fi
 
 	load_config
+}
 
+cmd_unmount() {
+	prepare_mount_change
 	/usr/bin/fusermount -u ${cfg[mnt]}
 	echo Unmounted $NAME
+}
+
+cmd_mount() {
+	prepare_mount_change
+	printf "%s\n" ${cfg[key]} | $CRYFS_CMD ${cfg[src]} ${cfg[mnt]}
+	echo Mounted $NAME
 }
 
 # ---------------------
@@ -120,6 +129,9 @@ case $SCMD in
 		;;
 	unmount)
 		cmd_unmount
+		;;
+	mount)
+		cmd_mount
 		;;
 
 	*)
