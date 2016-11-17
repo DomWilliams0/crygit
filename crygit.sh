@@ -3,7 +3,10 @@ set -e
 
 CONFIG_PATH="$HOME/.config/crygit"
 KEY_LENGTH=512
-CRYFS_CMD="/usr/bin/env CRYFS_NO_UPDATE_CHECK=false /usr/bin/cryfs"
+
+run_cryfs() {
+	/usr/bin/env CRYFS_NO_UPDATE_CHECK=false /usr/bin/cryfs ${cfg[src]} ${cfg[mnt]}
+}
 
 show_help() {
 	echo "Usage: $0 <name> <subcommand>"
@@ -73,7 +76,7 @@ cmd_init() {
 
 	# generate cryfs config
 	echo "Creating cryfs config in $src ... "
-	printf "y\n%s\n%s\n" $key $key | $CRYFS_CMD $src $mnt
+	printf "y\n%s\n%s\n" $key $key | run_cryfs
 
 	# save all to config
 	echo "Writing config to $PATH"
@@ -97,7 +100,7 @@ cmd_unmount() {
 
 cmd_mount() {
 	prepare_mount_change
-	printf "%s\n" ${cfg[key]} | $CRYFS_CMD ${cfg[src]} ${cfg[mnt]}
+	printf "%s\n" ${cfg[key]} | run_cryfs
 	echo Mounted $NAME
 }
 
