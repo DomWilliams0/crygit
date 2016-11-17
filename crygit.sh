@@ -22,6 +22,21 @@ config_exists() {
 	[ -f $PATH ]
 }
 
+load_config() {
+	if ! config_exists; then
+		echo "Config for $NAME not found at $PATH"
+		exit 1
+	fi
+
+	while read line
+	do
+		if echo $line | /usr/bin/grep -F = &>/dev/null; then
+			varname=$(echo "$line" | /usr/bin/cut -d '=' -f 1)
+			cfg[$varname]=$(echo "$line" | /usr/bin/cut -d '=' -f 2-)
+		fi
+	done < $PATH
+}
+
 write_config() {
 	create_config_dir
 	{
@@ -65,6 +80,18 @@ cmd_init() {
 	write_config
 }
 
+cmd_unmount() {
+	if (( $ARGC != 0 )); then
+		echo "Usage: $0 $SCMD"
+		exit 1
+	fi
+
+	load_config
+
+	/usr/bin/fusermount -u ${cfg[mnt]}
+	echo Unmounted $NAME
+}
+
 # ---------------------
 
 if (( $# < 2 )); then
@@ -90,6 +117,9 @@ fi
 case $SCMD in
 	init)
 		cmd_init
+		;;
+	unmount)
+		cmd_unmount
 		;;
 
 	*)
