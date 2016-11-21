@@ -3,13 +3,25 @@ set -e
 
 CONFIG_PATH="$HOME/.config/crygit"
 KEY_LENGTH=512
+SSH_KEY="$CONFIG_PATH/ssh/crygit-ssh-key"
 
 run_cryfs() {
 	env CRYFS_NO_UPDATE_CHECK=false cryfs ${cfg[src]} ${cfg[mnt]}
 }
 
 run_git() {
-	git --git-dir ${cfg[src]}/.git --work-tree ${cfg[src]} "$@"
+	ensure_ssh_key_exists
+	GIT_SSH_COMMAND="ssh -i $SSH_KEY" git --git-dir ${cfg[src]}/.git --work-tree ${cfg[src]} "$@"
+}
+
+ensure_ssh_key_exists() {
+	if ! [ -f $SSH_KEY ]; then
+		# create dir
+		mkdir -p $(dirname $SSH_KEY)
+
+		# generate ssh key
+		ssh-keygen -t rsa -b 4096 -f $SSH_KEY -N ""
+	fi
 }
 
 has_any_remotes() {
