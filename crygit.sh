@@ -20,7 +20,7 @@ ensure_ssh_key_exists() {
 		mkdir -p $(dirname $SSH_KEY)
 
 		# generate ssh key
-		ssh-keygen -t rsa -b 4096 -f $SSH_KEY -N ""
+		ssh-keygen -t rsa -b 4096 -f $SSH_KEY -N "" -C "crygit-daemon"
 	fi
 }
 
@@ -83,6 +83,9 @@ cmd_init() {
 		echo $NAME already exists
 		exit 1
 	fi
+
+	mkdir -p $src
+	mkdir -p $mnt
 
 	# set mount points in config
 	cfg[src]=$src
@@ -173,10 +176,11 @@ cmd_sync() {
 
 	load_config
 
+	echo Adding all files to git
 	run_git add -A >/dev/null
 
 	set +e
-	run_git commit -a -m "Update files" >/dev/null
+	run_git commit -a -m "Update files"
 
 	has_any_remotes || { echo "No remotes to sync to"; exit 1; }
 	for remote in $(run_git remote); do
