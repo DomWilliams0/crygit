@@ -64,8 +64,8 @@ cmd_init() {
 		exit 1
 	fi
 
-	src=${ARGV[0]}
-	mnt=${ARGV[1]}
+	src=$(readlink -f ${ARGV[0]})
+	mnt=$(readlink -f ${ARGV[1]})
 
 	if config_exists; then
 		echo $NAME already exists
