@@ -176,6 +176,36 @@ cmd_sync() {
 	set -e
 }
 
+cmd_bigsync() {
+	if (( $ARGC != 0 )); then
+		echo "Usage: $0 $SCMD"
+		exit 1
+	fi
+
+	load_config
+
+	run_git add -A >/dev/null
+
+	set +e
+	echo Committing in small chunks
+	commit_msg="Update files (inconsistent state)"
+	for i in $(seq 0 15 | xargs printf "%X "); do
+		run_git commit -m "$commit_msg" $(find ${cfg[src]} -maxdepth 1 -name "$i*" -printf "%f "); 1>/dev/null 2>&1
+	done
+	run_git commit -a -m "$commit_msg" >/dev/null
+
+	has_any_remotes || { echo "No remotes to sync to"; exit 1; }
+	for remote in $(run_git remote); do
+		echo "Syncing one-by-one to $remote"
+
+		for commit in $(run_git log --branches --not --remotes --reverse --pretty=format:"%H"); do
+			run_git push "$remote" "$commit":master
+		done
+	done
+
+	set -e
+}
+
 # ---------------------
 if (( $# < 2 )); then
 	show_help
@@ -212,6 +242,9 @@ case $SCMD in
 		;;
 	sync)
 		cmd_sync
+		;;
+	bigsync)
+		cmd_bigsync
 		;;
 	*)
 		echo Invalid subcommand
