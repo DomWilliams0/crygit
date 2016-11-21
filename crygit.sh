@@ -218,6 +218,28 @@ cmd_bigsync() {
 	set -e
 }
 
+cmd_squash() {
+	if (( $ARGC != 0 )); then
+		echo "Usage: $0 $SCMD"
+		exit 1
+	fi
+
+	load_config
+
+	read -p "This will lose all filesystem history, leaving you with a single commit. Are you sure you want to do this? [y/N]" -n 1 -r
+	echo
+	if [[ $REPLY =~ ^[Yy]$ ]]; then
+		echo Squashing into a single commit
+		run_git reset $(run_git commit-tree HEAD^{tree} -m "Squash filesystem")
+
+		for remote in $(run_git remote); do
+			echo "Syncing to $remote"
+			run_git push "$remote" master --force
+		done
+
+	fi
+}
+
 # ---------------------
 if (( $# < 2 )); then
 	show_help
@@ -228,7 +250,7 @@ ARGV=("${@:3}")
 SCMD="$2"
 typeset -A cfg
 cfg=(
-	[name]="$1"
+[name]="$1"
 )
 
 NAME=${cfg[name]}
@@ -257,6 +279,9 @@ case $SCMD in
 		;;
 	bigsync)
 		cmd_bigsync
+		;;
+	squash)
+		cmd_squash
 		;;
 	*)
 		echo Invalid subcommand
