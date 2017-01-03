@@ -6,7 +6,7 @@ KEY_LENGTH=512
 SSH_KEY="$CONFIG_PATH/ssh/crygit-ssh-key"
 
 run_cryfs() {
-	env CRYFS_NO_UPDATE_CHECK=false cryfs ${cfg[src]} ${cfg[mnt]}
+	env CRYFS_NO_UPDATE_CHECK=false CRYFS_FRONTEND=noninteractive cryfs ${cfg[src]} ${cfg[mnt]}
 }
 
 run_git() {
